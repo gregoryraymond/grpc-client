@@ -8,17 +8,26 @@ const TEXT_BOX_WIDTH: f64 = 200.0;
 pub(crate) fn build_root_widget() -> impl Widget<HelloState> {
     // a label that will determine its text based on the current app data.
     let label = Label::new(|data: &HelloState, _env: &Env| {
-        if data.name.is_empty() {
-            "Hello anybody!?".to_string()
+        if data.name.len() > 0 {
+            match std::fs::File::open(&data.name) {
+                Ok(_) => data.document.borrow_mut().filepath = Some(data.name.clone()),
+                Err(e) => {
+                    log::warn!("Could not open file {e}");
+                }
+            }
+        }
+
+        if let Some(x) = &data.document.borrow().filepath {
+            format!("Loaded {}", x.clone())
         } else {
-            format!("Hello {}!", data.name)
+            String::from("No file loaded.")
         }
     })
     .with_text_size(32.0);
 
     // a textbox that modifies `name`.
     let textbox = TextBox::new()
-        .with_placeholder("Who are we greeting?")
+        .with_placeholder("gRPC Proto File Path")
         .with_text_size(18.0)
         .fix_width(TEXT_BOX_WIDTH)
         .lens(HelloState::name);

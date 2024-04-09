@@ -2,10 +2,12 @@ mod handlers;
 mod root_widget;
 mod state;
 
+use std::{cell::RefCell, default, rc::Rc};
+
 use druid::{AppLauncher, WindowDesc};
 use env_logger::Builder;
 use log::LevelFilter;
-use state::HelloState;
+use state::{DocumentState, HelloState};
 use root_widget::build_root_widget;
 
 extern crate serde_derive;
@@ -37,7 +39,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // create the initial app state
     let initial_state: HelloState = HelloState {
-        name: "grpc Client".into(),
+        name: "".into(),
+        document: Rc::new(RefCell::new(DocumentState {
+            filepath: Option::None,
+        })),
     };
 
     // start the application. Here we pass in the application state.
