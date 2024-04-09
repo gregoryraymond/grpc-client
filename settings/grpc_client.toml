@@ -1,0 +1,3 @@
+server_address = "grpc_server"
+port = 50051
+register_backoff = 5
