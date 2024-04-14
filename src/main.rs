@@ -1,13 +1,14 @@
 mod handlers;
 mod root_widget;
 mod state;
+mod collection_open;
 
 use std::{cell::RefCell, default, rc::Rc};
 
 use druid::{AppLauncher, WindowDesc};
 use env_logger::Builder;
 use log::LevelFilter;
-use state::{DocumentState, HelloState};
+use state::{Delegate, DocumentState, HelloState};
 use root_widget::build_root_widget;
 
 extern crate serde_derive;
@@ -41,13 +42,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let initial_state: HelloState = HelloState {
         name: "".into(),
         document: Rc::new(RefCell::new(DocumentState {
-            filepath: Option::None,
+            collection_path: Option::None,
+            proto_files: Some(vec![]),
         })),
     };
 
     // start the application. Here we pass in the application state.
     AppLauncher::with_window(main_window)
         .log_to_console()
+        .delegate(Delegate::default())
         .launch(initial_state)?;
 
     Ok(())
