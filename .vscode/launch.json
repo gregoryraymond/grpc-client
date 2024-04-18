@@ -19,6 +19,7 @@
                     "kind": "bin"
                 }
             },
+            "terminal": "integrated",
             "args": [],
             "cwd": "${workspaceFolder}"
         },
@@ -38,6 +39,7 @@
                     "kind": "bin"
                 }
             },
+            "terminal": "integrated",
             "args": [],
             "cwd": "${workspaceFolder}"
         }

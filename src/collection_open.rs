@@ -1,32 +1,35 @@
-use std::fs::File;
+use std::{fs::File, path::PathBuf, str::FromStr, thread};
 
-use druid::{commands, widget::{Button, Flex, Label, TextBox}, AppDelegate, Command, DelegateCtx, Env, FileDialogOptions, FileSpec, Handled, Target, UnitPoint, Widget};
+use druid::{commands, widget::{Button, Flex, Label, TextBox}, AppDelegate, Command, DelegateCtx, Env, ExtEventSink, FileDialogOptions, FileInfo, FileSpec, Handled, Selector, Target, UnitPoint, Widget};
 use druid::WidgetExt;
 use std::io::Read;
 use crate::state::HelloState;
+use crate::grpc_build::grpc_build;
 
 const VERTICAL_WIDGET_SPACING: f64 = 20.0;
 const TEXT_BOX_WIDTH: f64 = 200.0;
 
-pub(crate) fn build_collection_window() -> impl Widget<HelloState> {
-    // a label that will determine its text based on the current app data.
-    let label = Label::new(|data: &HelloState, _env: &Env| {
-        if data.name.len() > 0 {
-            match std::fs::File::open(&data.name) {
-                Ok(_) => data.document.borrow_mut().collection_path = Some(data.name.clone()),
-                Err(e) => {
-                    log::warn!("Could not open file {e}");
-                }
-            }
-        }
+pub(crate) const FINISH_SLOW_FUNCTION: Selector<String> = Selector::new("finish_slow_function");
 
-        if let Some(x) = &data.document.borrow().collection_path {
-            format!("Loaded {}", x.clone())
+pub(crate) fn build_collection_window(sink: ExtEventSink, files: Vec<FileInfo>) -> impl Widget<HelloState> {
+    
+    thread::spawn(move || {
+        let first_file_clone = files[0].clone();
+        if let Err(e) = grpc_build(files.iter().map(|x| x.path.clone()).collect()) {
+            sink.submit_command(FINISH_SLOW_FUNCTION, e.to_string(), Target::Auto)
+                .expect("command failed to submit");
         } else {
-            String::from("No file loaded.")
+            sink.submit_command(FINISH_SLOW_FUNCTION, format!("Loaded {:?}", first_file_clone), Target::Auto)
+                .expect("command failed to submit");
         }
+    });
+
+    // a label that will determine its text based on the current app data.
+    let label = Label::new(move |data: &HelloState, _env: &Env| {
+        data.name.to_string()
     })
-    .with_text_size(32.0);
+    .with_line_break_mode(druid::widget::LineBreaking::WordWrap)
+    .with_text_size(16.0);
 
     // arrange the two widgets vertically, with some padding
     Flex::column()

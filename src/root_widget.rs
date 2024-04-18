@@ -1,9 +1,9 @@
-use std::fs::File;
+use std::{fs::File, thread};
 
-use druid::{commands, widget::{Button, Flex, Label, TextBox}, AppDelegate, Command, DelegateCtx, Env, FileDialogOptions, FileInfo, FileSpec, Handled, Target, UnitPoint, Widget, WindowDesc, WindowHandle, WindowId};
+use druid::{commands, widget::{Button, Flex, Label, TextBox}, AppDelegate, Command, DelegateCtx, Env, FileDialogOptions, FileInfo, FileSpec, Handled, Selector, Target, UnitPoint, Widget, WindowDesc, WindowHandle, WindowId};
 use druid::WidgetExt;
 use std::io::Read;
-use crate::{collection_open::build_collection_window, state::{Delegate, HelloState}};
+use crate::{collection_open::{build_collection_window, FINISH_SLOW_FUNCTION}, state::{Delegate, HelloState}};
 
 const VERTICAL_WIDGET_SPACING: f64 = 20.0;
 const TEXT_BOX_WIDTH: f64 = 200.0;
@@ -11,19 +11,10 @@ const TEXT_BOX_WIDTH: f64 = 200.0;
 pub(crate) fn build_root_widget() -> impl Widget<HelloState> {
     // a label that will determine its text based on the current app data.
     let label = Label::new(|data: &HelloState, _env: &Env| {
-        if data.name.len() > 0 {
-            match std::fs::File::open(&data.name) {
-                Ok(_) => data.document.borrow_mut().collection_path = Some(data.name.clone()),
-                Err(e) => {
-                    log::warn!("Could not open file {e}");
-                }
-            }
-        }
-
         if let Some(x) = &data.document.borrow().collection_path {
             format!("Loaded {}", x.clone())
         } else {
-            String::from("")
+            String::from("No File loaded")
         }
     })
     .with_text_size(32.0);
@@ -45,7 +36,7 @@ pub(crate) fn build_root_widget() -> impl Widget<HelloState> {
         .with_text_size(18.0)
         .disabled_if(|_, _| { true })
         .fix_width(TEXT_BOX_WIDTH)
-        .lens(HelloState::name);
+        .lens(HelloState::empty);
 
     let open = Button::new("Open").on_click(move |ctx, _, _| {
         ctx.submit_command(druid::commands::SHOW_OPEN_PANEL.with(open_dialog_options.clone()))
@@ -98,14 +89,19 @@ impl AppDelegate<HelloState> for Delegate {
         }
         if let Some(info) = cmd.get(commands::OPEN_FILE) {
             self.open_file(data, &info);
-            ctx.new_window(WindowDesc::new(build_collection_window()).title("gRPC Collection").window_size((800.0, 600.0)));
+            ctx.new_window(WindowDesc::new(build_collection_window(ctx.get_external_handle(), vec![info.clone()])).title("gRPC Collection").window_size((800.0, 600.0)));
             return Handled::Yes;
         }
         if let Some(file_info) = cmd.get(commands::OPEN_FILES) {
             for info in file_info.clone() {
                 self.open_file(data, &info);
             }
-            ctx.new_window(WindowDesc::new(build_collection_window()).title("gRPC Collection").window_size((800.0, 600.0)));
+            ctx.new_window(WindowDesc::new(build_collection_window(ctx.get_external_handle(), file_info.to_vec())).title("gRPC Collection").window_size((800.0, 600.0)));
+            return Handled::Yes;
+        }
+        if let Some(result) = cmd.get(FINISH_SLOW_FUNCTION) {
+            data.name = result.clone();
+            // If the command we received is `FINISH_SLOW_FUNCTION` handle the payload.
             return Handled::Yes;
         }
         Handled::No

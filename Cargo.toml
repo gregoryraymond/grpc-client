@@ -3,6 +3,9 @@ name = "client"
 version = "0.1.0"
 edition = "2021"
 
+[package.metadata.rust-analyzer]
+# This package uses rustc crates.
+rustc_private=true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -16,6 +19,7 @@ env_logger = "0.11.3"
 chrono = "0.4.26"
 druid = "0.8.3"
 grpc-build = "6.1.0"
+tonic-build = "0.11"
 
 [build-dependencies]
 tonic-build = "0.11"

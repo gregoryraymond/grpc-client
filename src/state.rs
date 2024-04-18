@@ -17,5 +17,6 @@ pub(crate) struct DocumentState {
 #[derive(Clone, Data, Lens)]
 pub(crate) struct HelloState {
     pub name: String,
+    pub empty: String,
     pub document: Rc<RefCell<DocumentState>>,
 }
