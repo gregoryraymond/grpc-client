@@ -1,30 +1,60 @@
 use std::path::PathBuf;
-use std::str::FromStr;
-use druid::FileInfo;
 use grpc_build::base::prepare_out_dir;
 use grpc_build::base::refactor;
+use log::debug;
+use log::info;
 
 use crate::compile::compile_protogen;
 
-pub(crate) fn grpc_build(protos: Vec<PathBuf>) -> Result<(), Box<dyn std::error::Error>> {
-    let proto_out_dir = "protogen";
+pub(crate) fn grpc_build(protos: Vec<PathBuf>) -> anyhow::Result<Vec<PathBuf>> {
+    let mut proto_out_dir = std::env::current_dir()?;
+    proto_out_dir.push("protogen");
 
-    prepare_out_dir(proto_out_dir)?;
+    let mut target_dir = proto_out_dir.clone();
+    target_dir.push("target");
 
-    let mut path = protos[0].clone();
-    path.pop();
+    let location = String::from(proto_out_dir.to_string_lossy()) + "/Cargo.toml";
 
-    tonic_build::configure()
-        .out_dir(proto_out_dir)
-        .build_server(true)
-        .build_client(true)
-        .compile(&protos, &[".", path.to_string_lossy().to_string().as_str()])?;
+    if target_dir.exists() {
+        debug!("Creating proto {}", proto_out_dir.to_string_lossy());
+        let _ = std::fs::remove_dir_all(&proto_out_dir);
+        let _ = std::fs::create_dir(&proto_out_dir)?;
 
-    refactor(proto_out_dir)?;
+        prepare_out_dir(&proto_out_dir)?;
 
-    let mut location = PathBuf::from_str(proto_out_dir)?;
-    location.set_file_name("mod.rs");
-    compile_protogen(location)?;
+        let mut path = protos[0].clone();
+        path.pop();
 
-    Ok(())
+        // Input is shadowed in the proto-path by 
+        tonic_build::configure()
+            .out_dir(&proto_out_dir)
+            .build_server(true)
+            .build_client(true)
+            .compile_well_known_types(true)
+            .compile(&protos, &[path.to_string_lossy().to_string().as_str(), "."])?;
+
+        refactor(&proto_out_dir)?;
+
+        info!("Writing cargo toml {}", location);
+        std::fs::write(&location, r#"
+[package]
+name = "protogen"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+grpc-build = "6.1.0"
+tonic-build = "0.11"
+tonic = "*"
+prost = "*"
+
+[lib]
+crate-type = ["cdylib"]
+bench = false
+path = "mod.rs"
+"#)?;
+    }
+    
+    let compilation = compile_protogen(PathBuf::from(&location))?;
+    Ok(compilation)
 }

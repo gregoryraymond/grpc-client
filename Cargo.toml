@@ -5,7 +5,7 @@ edition = "2021"
 
 [package.metadata.rust-analyzer]
 # This package uses rustc crates.
-rustc_private=true
+# rustc_private=true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -20,6 +20,8 @@ chrono = "0.4.26"
 druid = "0.8.3"
 grpc-build = "6.1.0"
 tonic-build = "0.11"
+cargo = "0.79.0"
+anyhow = "1.0.83"
 
 [build-dependencies]
 tonic-build = "0.11"

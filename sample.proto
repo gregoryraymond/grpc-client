@@ -1,0 +1,40 @@
+syntax="proto3";
+
+package sample;
+
+service UserService {
+    rpc ListUsers(ListUsersRequest) returns (stream User);
+    rpc UpdateUser(UpdateUserRequest) returns (User);
+}
+
+enum Role {
+    GUEST = 0;
+    MEMBER = 1;
+    ADMIN = 2;
+}
+
+message User {
+    uint32 id = 1;
+    Role role = 2;
+    string date = 3;
+}
+
+message UserRole {
+    Role role = 1;
+}
+
+message UpdateUserRequest {
+    // The user resource which replaces the resource on the server.
+    User user = 1;
+
+    // The update mask applies to the resource. For the `FieldMask` definition,
+    // see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmask
+    uint32 update = 2;
+}
+
+message ListUsersRequest {
+    // Only list users created after this timestamp
+    string created = 1;
+    // Only list users older than this Duration
+    string older = 2;
+}

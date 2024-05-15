@@ -19,4 +19,5 @@ pub(crate) struct HelloState {
     pub name: String,
     pub empty: String,
     pub document: Rc<RefCell<DocumentState>>,
+    pub document_contents: String
 }
