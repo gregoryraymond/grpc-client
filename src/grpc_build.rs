@@ -37,21 +37,25 @@ pub(crate) fn grpc_build(protos: Vec<PathBuf>) -> anyhow::Result<Vec<PathBuf>> {
 
         info!("Writing cargo toml {}", location);
         std::fs::write(&location, r#"
-[package]
-name = "protogen"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-grpc-build = "6.1.0"
-tonic-build = "0.11"
-tonic = "*"
-prost = "*"
-
-[lib]
-crate-type = ["cdylib"]
-bench = false
-path = "mod.rs"
+        [package]
+        name = "protogen"
+        version = "0.1.0"
+        edition = "2021"
+        
+        [dependencies]
+        grpc-build = "6.1.0"
+        tonic-build = "0.11"
+        tonic = "*"
+        prost = "*"
+        
+        [build-dependencies]
+        syn = { version = "2.0.65", features = ["full"]}
+        walkdir = "2.5.0"
+        
+        [lib]
+        crate-type = ["cdylib"]
+        bench = false
+        path = "mod.rs"        
 "#)?;
     }
     

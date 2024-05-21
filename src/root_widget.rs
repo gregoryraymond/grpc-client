@@ -1,9 +1,9 @@
-use std::{fs::File, thread};
+use std::fs::File;
 
 use druid::{commands, widget::{Button, Flex, Label, TextBox}, AppDelegate, Command, DelegateCtx, Env, FileDialogOptions, FileInfo, FileSpec, Handled, Selector, Target, UnitPoint, Widget, WindowDesc, WindowHandle, WindowId};
 use druid::WidgetExt;
 use std::io::Read;
-use crate::{collection_open::{build_collection_window, FINISH_SLOW_FUNCTION}, state::{Delegate, HelloState}};
+use crate::{collection_open::{build_collection_window, build_editor_window, FINISH_SLOW_FUNCTION, LAUNCH_EDITOR}, state::{Delegate, HelloState}};
 
 const VERTICAL_WIDGET_SPACING: f64 = 20.0;
 const TEXT_BOX_WIDTH: f64 = 200.0;
@@ -97,6 +97,10 @@ impl AppDelegate<HelloState> for Delegate {
                 self.open_file(data, &info);
             }
             ctx.new_window(WindowDesc::new(build_collection_window(ctx.get_external_handle(), file_info.to_vec())).title("gRPC Collection").window_size((800.0, 600.0)));
+            return Handled::Yes;
+        }
+        if let Some(result) = cmd.get(LAUNCH_EDITOR) {
+            ctx.new_window(WindowDesc::new(build_editor_window(ctx.get_external_handle(), result)).title("gRPC Tester").window_size((800.0, 600.0)));
             return Handled::Yes;
         }
         if let Some(result) = cmd.get(FINISH_SLOW_FUNCTION) {

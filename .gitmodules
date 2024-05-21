@@ -1,0 +1,3 @@
+[submodule "vendor/nonepad"]
+	path = vendor/nonepad
+	url = git@github.com:pepone42/nonepad.git

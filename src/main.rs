@@ -5,6 +5,8 @@ mod state;
 mod collection_open;
 mod grpc_build;
 
+extern crate dyon;
+
 use std::{cell::RefCell, rc::Rc};
 
 use druid::{AppLauncher, WindowDesc};
